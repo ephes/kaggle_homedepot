@@ -1,14 +1,22 @@
 import re
+import logging
+
 import numpy as np
 import pandas as pd
 
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from nltk.stem.porter import PorterStemmer
 
 from joblib import Memory
 memory = Memory(cachedir='/tmp/joblib')
+
+from text import get_distance_features
+
+logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
+logging.info('feature extraction owl')
 
 stemmer = PorterStemmer()
 
@@ -196,6 +204,13 @@ def get_features(df):
     feat['owl_brand_feature'] = df['brand'].map(lambda x: d[x])
 
     return feat
+
+    logging.info('get owl cosine distances')
+	unigram_vectorizer = TfidfVectorizer(
+        min_df=3, max_df=0.75, stop_words='english', strip_accents='unicode',
+        use_idf=1, smooth_idf=1, sublinear_tf=1,
+        token_pattern= r'(?u)\b\w\w+\b')
+	feat = get_distance_features(unigram_vectorizer, 'owl_unigram', df, feat)
 
 
 if __name__ == "__main__":
