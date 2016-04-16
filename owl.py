@@ -207,7 +207,7 @@ def get_features(df):
     logging.info('get owl cosine distances')
     owl_unigram_path = '/tmp/owl_unigram_cosine.csv'
     if os.path.exists(owl_unigram_path):
-        owl_unigram_feat = pd.read_csv(owl_unigram_path)
+        owl_unigram_feat = pd.read_csv(owl_unigram_path, index_col=0)
     else:
         unigram_vectorizer = TfidfVectorizer(
             min_df=3, max_df=0.75, stop_words='english',
