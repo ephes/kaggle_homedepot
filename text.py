@@ -19,7 +19,7 @@ def cosine_similarity_row_wise(a, b):
 
 def get_query_in_title(df):
     result = []
-    for query, title in zip(df.search_term.values, df_all.product_title.values):
+    for query, title in zip(df.search_term.values, df.product_title.values):
         query = ''.join([q for q in query if q.isalnum()])
         title = title.lower()
         title = ''.join([t for t in title.lower() if t.isalnum()])
@@ -32,8 +32,8 @@ def get_query_in_title(df):
 
 
 def get_distance_features(vectorizer, prefix, df, feat):
-    all_text = df_all.search_term + '\t' + df_all.product_title + '\t' \
-        + df_all.product_description + '\t' + df_all.attr_texts
+    all_text = df.search_term + '\t' + df.product_title + '\t' \
+        + df.product_description + '\t' + df.attr_texts
     unigram_vectorizer.fit(all_text)
 
     search_terms = vectorizer.transform(df.search_term)
@@ -55,11 +55,11 @@ def get_distance_features(vectorizer, prefix, df, feat):
     return feat
 
 
-def get_golden_features(df, feat):
+def get_golden_features(feat):
     feat['unigram_title_all_golden'] = \
-        df_all.unigram_title - df_all.unigram_description
+        feat.unigram_title - feat.unigram_description
     feat['unigram_bigram_desc_desc_golden'] = \
-        df_all.unigram_description - df_all.bigram_description
+        feat.unigram_description - feat.bigram_description
     return feat
 
 
@@ -73,15 +73,15 @@ def get_jaccard_similarities(a, b):
 
 def get_jaccard_features(df, feat):
     vectorizer = CountVectorizer(binary=True, min_df=2)
-    text = df_all.search_term + '\t' + df_all.product_title + '\t' + i\
-        df_all.product_description + '\t' + df_all.attr_texts
+    text = df.search_term + '\t' + df.product_title + '\t' + i\
+        df.product_description + '\t' + df.attr_texts
     vectorizer.fit(text)
 
-    search = vectorizer.transform(df_all.search_term)
-    title = vectorizer.transform(df_all.product_title)
-    description = vectorizer.transform(df_all.product_description)
-    brand = vectorizer.transform(df_all.brand)
-    attributes = vectorizer.transform(df_all.attr_texts)
+    search = vectorizer.transform(df.search_term)
+    title = vectorizer.transform(df.product_title)
+    description = vectorizer.transform(df.product_description)
+    brand = vectorizer.transform(df.brand)
+    attributes = vectorizer.transform(df.attr_texts)
 
     feat['jaccard_search_title'] = get_jaccard_similarities(search, title)
     feat['jaccard_search_desc'] = get_jaccard_similarities(search, description)
@@ -111,8 +111,8 @@ def get_count_features(df, feat):
     feat['brand_text_len_ratio'] = feat.brand_text_len_word / feat.brand_text_len_char
     feat['brand_text_len_ratio'] = feat.brand_text_len_ratio.fillna(value=0)
     feat['title_text_len_ratio'] = feat.title_text_len_word / feat.title_text_len_char
-    feat['desc_text_len_ratio'] = feat.desc_text_len_word / df_all.desc_text_len_char
-    feat['attr_text_len_ratio'] = feat.attr_text_len_word / df_all.attr_text_len_char
+    feat['desc_text_len_ratio'] = feat.desc_text_len_word / feat.desc_text_len_char
+    feat['attr_text_len_ratio'] = feat.attr_text_len_word / feat.attr_text_len_char
     feat['attr_text_len_ratio'] = feat.attr_text_len_ratio.fillna(value=0)
     return feat
 
@@ -124,9 +124,6 @@ def get_features(df):
     feat['two_word_query'] = (df.len_of_query == 2).astype(int)
     feat['query_in_title'] = get_query_in_title(df)
     
-    all_text = df_all.search_term + '\t' + df_all.product_title + '\t' \
-        + df_all.product_description + '\t'
-
     logging.info('get count features')
     feat = get_count_features(df, feat)
 
@@ -152,7 +149,7 @@ def get_features(df):
     feat = get_distance_features(ngram_vectorizer, 'ngram', df, feat)
 
     logging.info('get golden features')
-    feat = get_golden_features(df, feat)
+    feat = get_golden_features(feat)
 
     logging.info('get jaccard similarity features')
     feat = get_jaccard_features(df, feat)
