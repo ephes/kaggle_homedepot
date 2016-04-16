@@ -186,6 +186,15 @@ def get_features(df):
     feat['owl_word_in_brand'] = owl_attr.map(
         lambda x:str_common_word(x.split('\t')[0], x.split('\t')[1]))
     feat['owl_ratio_brand'] = feat.owl_word_in_brand / feat.owl_len_of_brand
+
+    df_brand = pd.unique(df.brand.ravel())
+    d={}
+    i = 1000
+    for s in df_brand:
+        d[s]=i
+        i+=3
+    feat['owl_brand_feature'] = df['brand'].map(lambda x: d[x])
+
     return feat
 
 
