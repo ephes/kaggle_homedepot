@@ -1,5 +1,7 @@
 import pandas as pd
 
+from sklearn.metrics import mean_squared_error, make_scorer
+
 
 def get_attribute_data():
     df_attr = pd.read_csv('attributes.csv')
@@ -38,3 +40,11 @@ def get_data():
     df['brand'] = df.brand.fillna(value='')
 
     return df
+
+
+def fmean_squared_error(ground_truth, predictions):
+    fmean_squared_error_ = mean_squared_error(ground_truth, predictions)**0.5
+    return fmean_squared_error_
+
+
+RMSE = make_scorer(fmean_squared_error, greater_is_better=False)
