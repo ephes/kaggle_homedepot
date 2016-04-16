@@ -1,0 +1,13 @@
+name: homedepot
+dependencies:
+- python
+- pandas
+- scikit-learn
+- jupyter
+- seaborn
+- joblib
+- cython
+- gensim
+- pip:
+    - xgboost
+    - git+https://github.com/josephreisinger/vowpal_porpoise
