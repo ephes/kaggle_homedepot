@@ -73,7 +73,7 @@ def get_jaccard_similarities(a, b):
 
 def get_jaccard_features(df, feat):
     vectorizer = CountVectorizer(binary=True, min_df=2)
-    text = df.search_term + '\t' + df.product_title + '\t' + i\
+    text = df.search_term + '\t' + df.product_title + '\t' + \
         df.product_description + '\t' + df.attr_texts
     vectorizer.fit(text)
 
