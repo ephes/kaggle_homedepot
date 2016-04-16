@@ -1,3 +1,4 @@
+import os
 import re
 import logging
 
@@ -204,11 +205,19 @@ def get_features(df):
     feat['owl_brand_feature'] = df['brand'].map(lambda x: d[x])
 
     logging.info('get owl cosine distances')
-    unigram_vectorizer = TfidfVectorizer(
-        min_df=3, max_df=0.75, stop_words='english', strip_accents='unicode',
-        use_idf=1, smooth_idf=1, sublinear_tf=1,
-        token_pattern= r'(?u)\b\w\w+\b')
-    feat = get_distance_features(unigram_vectorizer, 'owl_unigram', df, feat)
+    owl_unigram_path = '/tmp/owl_unigram_cosine.csv'
+    if os.path.exists(owl_unigram_path):
+        owl_unigram_feat = pd.read_csv(owl_unigram_path)
+    else:
+        unigram_vectorizer = TfidfVectorizer(
+            min_df=3, max_df=0.75, stop_words='english',
+            strip_accents='unicode', use_idf=1, smooth_idf=1, sublinear_tf=1,
+            token_pattern= r'(?u)\b\w\w+\b')
+        owl_unigram_feat = get_distance_features(
+            unigram_vectorizer, 'owl_unigram', df)
+        owl_unigram_feat.to_csv(owl_unigram_path)
+
+    feat = pd.concat([feat, owl_unigram_feat], axis=1)
 
     return feat
 
