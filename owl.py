@@ -203,14 +203,14 @@ def get_features(df):
         i+=3
     feat['owl_brand_feature'] = df['brand'].map(lambda x: d[x])
 
-    return feat
-
     logging.info('get owl cosine distances')
     unigram_vectorizer = TfidfVectorizer(
         min_df=3, max_df=0.75, stop_words='english', strip_accents='unicode',
         use_idf=1, smooth_idf=1, sublinear_tf=1,
         token_pattern= r'(?u)\b\w\w+\b')
     feat = get_distance_features(unigram_vectorizer, 'owl_unigram', df, feat)
+
+    return feat
 
 
 if __name__ == "__main__":

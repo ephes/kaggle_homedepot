@@ -8,6 +8,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
 logging.info('feature extraction text')
 
+from joblib import Memory
+memory = Memory(cachedir='/tmp/joblib')
+
 
 @memory.cache
 def cosine_similarity_row_wise(a, b):
@@ -34,7 +37,7 @@ def get_query_in_title(df):
 def get_distance_features(vectorizer, prefix, df, feat):
     all_text = df.search_term + '\t' + df.product_title + '\t' \
         + df.product_description + '\t' + df.attr_texts
-    unigram_vectorizer.fit(all_text)
+    vectorizer.fit(all_text)
 
     search_terms = vectorizer.transform(df.search_term)
     feat['{}_all'.format(prefix)] = cosine_similarity_row_wise(
@@ -138,7 +141,7 @@ def get_features(df):
     bigram_vectorizer = TfidfVectorizer(
         min_df=3, max_df=0.75, stop_words='english', strip_accents='unicode',
         use_idf=1, smooth_idf=1, sublinear_tf=1,
-        token_pattern= r'(?u)\b\w\w+\b', ngram_range(1, 2))
+        token_pattern=r'(?u)\b\w\w+\b', ngram_range=(1, 2))
     feat = get_distance_features(bigram_vectorizer, 'bigram', df, feat)
 
     logging.info('get ngram cosine distances')
