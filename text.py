@@ -3,6 +3,8 @@ import logging
 import numpy as np
 import pandas as pd
 
+from sklearn.metrics import jaccard_similarity_score
+
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -144,7 +146,7 @@ def get_unigram_features(df):
     logging.info('get unigram cosine distances')
     unigram_path = '/tmp/unigram_cosine.csv'
     if os.path.exists(unigram_path):
-        unigram_features = pd.read_csv(unigram_path, index_col=0)
+        feat = pd.read_csv(unigram_path, index_col=0)
     else:
         unigram_vectorizer = TfidfVectorizer(
             min_df=3, max_df=0.75, stop_words='english',
@@ -159,7 +161,7 @@ def get_bigram_features(df):
     logging.info('get bigram cosine distances')
     bigram_path = '/tmp/bigram_cosine.csv'
     if os.path.exists(bigram_path):
-        bigram_features = pd.read_csv(bigram_path, index_col=0)
+        feat = pd.read_csv(bigram_path, index_col=0)
     else:
         bigram_vectorizer = TfidfVectorizer(
             min_df=3, max_df=0.75, stop_words='english',
@@ -172,9 +174,9 @@ def get_bigram_features(df):
 
 def get_ngram_features(df):
     logging.info('get ngram cosine distances')
-    bigram_path = '/tmp/ngram_cosine.csv'
+    ngram_path = '/tmp/ngram_cosine.csv'
     if os.path.exists(ngram_path):
-        ngram_features = pd.read_csv(ngram_path, index_col=0)
+        feat = pd.read_csv(ngram_path, index_col=0)
     else:
         ngram_vectorizer = TfidfVectorizer(
             min_df=3, max_df=0.75, strip_accents='unicode',
