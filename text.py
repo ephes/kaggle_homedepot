@@ -83,21 +83,28 @@ def get_jaccard_similarities(a, b):
 
 def get_jaccard_features(df):
     logging.info('get jaccard similarity features')
-    feat = pd.DataFrame(index=df.index)
-    vectorizer = CountVectorizer(binary=True, min_df=2)
-    text = df.search_term + '\t' + df.product_title + '\t' + \
-        df.product_description + '\t' + df.attr_texts
-    vectorizer.fit(text)
+    jaccard_path = '/tmp/jaccard.csv'
+    if os.path.exists(jaccard_path):
+        feat = pd.read_csv(jaccard_path, index_col=0)
+    else:
+        feat = pd.DataFrame(index=df.index)
+        vectorizer = CountVectorizer(binary=True, min_df=2)
+        text = df.search_term + '\t' + df.product_title + '\t' + \
+            df.product_description + '\t' + df.attr_texts
+        vectorizer.fit(text)
 
-    search = vectorizer.transform(df.search_term)
-    title = vectorizer.transform(df.product_title)
-    description = vectorizer.transform(df.product_description)
-    brand = vectorizer.transform(df.brand)
-    attributes = vectorizer.transform(df.attr_texts)
+        search = vectorizer.transform(df.search_term)
+        title = vectorizer.transform(df.product_title)
+        description = vectorizer.transform(df.product_description)
+        brand = vectorizer.transform(df.brand)
+        attributes = vectorizer.transform(df.attr_texts)
 
-    feat['jaccard_search_title'] = get_jaccard_similarities(search, title)
-    feat['jaccard_search_desc'] = get_jaccard_similarities(search, description)
-    feat['jaccard_search_attr'] = get_jaccard_similarities(search, attributes)
+        feat['jaccard_search_title'] = get_jaccard_similarities(search, title)
+        feat['jaccard_search_desc'] = get_jaccard_similarities(
+            search, description)
+        feat['jaccard_search_attr'] = get_jaccard_similarities(
+            search, attributes)
+        feat.to_csv(jaccard_path)
     return feat
 
 
@@ -195,12 +202,15 @@ def get_features(df):
     bigram_feat = get_bigram_features(df)
     ngram_feat = get_ngram_features(df)
     jaccard_feat = get_jaccard_features(df)
+
+    feat = pd.concat([
+        junk_feat, count_feat, unigram_feat, bigram_feat, ngram_feat,
+        jaccard_feat, jaccard_feat],
+        axis=1)
+
     golden_feat = get_golden_features(feat)
 
-    return pd.concat([
-        junk_feat, count_feat, unigram_feat, bigram_feat, ngram_feat,
-        jaccard_feat, jaccard_feat, golden_feat],
-        axis=1)
+    return pd.concat([feat, golden_feat], axis=1)
 
 
 if __name__ == "__main__":

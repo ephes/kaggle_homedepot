@@ -194,7 +194,8 @@ def get_features(df):
     owl_attr = owl_search_term + '\t' + owl_brand
     feat['owl_word_in_brand'] = owl_attr.map(
         lambda x:str_common_word(x.split('\t')[0], x.split('\t')[1]))
-    feat['owl_ratio_brand'] = feat.owl_word_in_brand / feat.owl_len_of_brand
+    feat['owl_ratio_brand'] = (feat.owl_word_in_brand / feat.owl_len_of_brand)
+    feat['owl_ratio_brand'] = feat.owl_ratio_brand.fillna(value=0.0)
 
     df_brand = pd.unique(df.brand.ravel())
     d={}
