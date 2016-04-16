@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 def get_data():
@@ -31,11 +30,3 @@ def get_data():
 	df['brand'] = df.brand.fillna(value='')
 
 	return df
-
-
-@memory.cache
-def cosine_similarity_row_wise(a, b):
-    result = np.empty(a.shape[0])
-    for i in range(a.shape[0]):
-        result[i] = a[i].dot(b[i].T).toarray()[0][0]
-    return result
