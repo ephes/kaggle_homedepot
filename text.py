@@ -74,6 +74,9 @@ def get_distance_features(vectorizer, prefix, df):
     feat['{}_description'.format(prefix)] = cosine_similarity_row_wise(
         search_terms, description)
 
+    feat['{}_title_description'.format(prefix)] = cosine_similarity_row_wise(
+        title, description)
+
     attributes = vectorizer.transform(df.attr_texts)
     feat['{}_attributes'.format(prefix)] = cosine_similarity_row_wise(
         search_terms, attributes)
@@ -236,6 +239,16 @@ def get_ngram_without_whitespace_features(df):
         title_terms = vectorizer.transform(title_text)
         feat['ngram_ww_title'] = cosine_similarity_row_wise(
             search_terms, title_terms)
+
+        desc_text = df.product_title.apply(
+            lambda x: ''.join([c for c in str(x).lower() if c.isalnum()]))
+        all_text = search_text + '\t' + desc_text
+        vectorizer.fit(all_text)
+        search_terms = vectorizer.transform(search_text)
+        desc_terms = vectorizer.transform(title_text)
+
+        feat['ngram_ww_desc'] = cosine_similarity_row_wise(
+            search_terms, desc_terms)
 
         feat.to_csv(ngram_ww_path)
     return feat
