@@ -8,6 +8,7 @@ dependencies:
 - joblib
 - cython
 - gensim
+- nltk
 - pip:
     - xgboost
     - git+https://github.com/josephreisinger/vowpal_porpoise

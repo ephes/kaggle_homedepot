@@ -1,7 +1,10 @@
 import os
+import nltk
 import logging
 import numpy as np
 import pandas as pd
+
+from difflib import SequenceMatcher as seq_matcher
 
 from sklearn.metrics import jaccard_similarity_score
 
@@ -12,6 +15,22 @@ logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
 
 from joblib import Memory
 memory = Memory(cachedir='/tmp/joblib')
+
+stopwords = nltk.corpus.stopwords.words("english")
+stopwords = set(stopwords)
+english_stemmer = nltk.stem.PorterStemmer()
+
+
+class StemmedTfidfVectorizer(TfidfVectorizer):
+    def build_analyzer(self):
+        analyzer = super().build_analyzer()
+        return lambda doc: (english_stemmer.stem(w) for w in analyzer(doc))
+
+
+class StemmedCountVectorizer(CountVectorizer):
+    def build_analyzer(self):
+        analyzer = super().build_analyzer()
+        return lambda doc: (english_stemmer.stem(w) for w in analyzer(doc))
 
 
 @memory.cache
@@ -88,7 +107,7 @@ def get_jaccard_features(df):
         feat = pd.read_csv(jaccard_path, index_col=0)
     else:
         feat = pd.DataFrame(index=df.index)
-        vectorizer = CountVectorizer(binary=True, min_df=2)
+        vectorizer = StemmedCountVectorizer(binary=True, min_df=2)
         text = df.search_term + '\t' + df.product_title + '\t' + \
             df.product_description + '\t' + df.attr_texts
         vectorizer.fit(text)
@@ -155,8 +174,8 @@ def get_unigram_features(df):
     if os.path.exists(unigram_path):
         feat = pd.read_csv(unigram_path, index_col=0)
     else:
-        unigram_vectorizer = TfidfVectorizer(
-            min_df=3, max_df=0.75, stop_words='english',
+        unigram_vectorizer = StemmedTfidfVectorizer(
+            min_df=3, max_df=0.75, stop_words=stopwords,
             strip_accents='unicode', use_idf=1, smooth_idf=1,
             sublinear_tf=1, token_pattern= r'(?u)\b\w\w+\b')
         feat = get_distance_features(unigram_vectorizer, 'unigram', df)
@@ -170,8 +189,8 @@ def get_bigram_features(df):
     if os.path.exists(bigram_path):
         feat = pd.read_csv(bigram_path, index_col=0)
     else:
-        bigram_vectorizer = TfidfVectorizer(
-            min_df=3, max_df=0.75, stop_words='english',
+        bigram_vectorizer = StemmedTfidfVectorizer(
+            min_df=3, max_df=0.75, stop_words=stopwords,
             strip_accents='unicode', use_idf=1, smooth_idf=1, sublinear_tf=1,
             token_pattern=r'(?u)\b\w\w+\b', ngram_range=(1, 2))
         feat = get_distance_features(bigram_vectorizer, 'bigram', df)
@@ -185,7 +204,7 @@ def get_ngram_features(df):
     if os.path.exists(ngram_path):
         feat = pd.read_csv(ngram_path, index_col=0)
     else:
-        ngram_vectorizer = TfidfVectorizer(
+        ngram_vectorizer = StemmedTfidfVectorizer(
             min_df=3, max_df=0.75, strip_accents='unicode',
             use_idf=1, smooth_idf=1, sublinear_tf=1, analyzer='char_wb',
             ngram_range=(2, 5))
@@ -194,8 +213,21 @@ def get_ngram_features(df):
     return feat
 
 
+def get_difflib_features(df):
+    logging.info('get difflib features')
+    feat = pd.DataFrame(index=df.index)
+    seq_distances = []
+    for i, (a, b) in enumerate(zip(df.search_term, df.product_title)):
+        a = ''.join([c for c in a if c.isalnum()])
+        b = ''.join([c for c in b if c.isalnum()])
+        seq_distances.append(seq_matcher(None, a, b).ratio())
+    feat['seq_match_ratio'] = 1.0 - np.array(seq_distances)
+    return feat
+
+
 def get_features(df):
     logging.info('feature extraction text')
+    difflib_feat = get_difflib_features(df)
     junk_feat = get_junk_features(df)
     count_feat = get_count_features(df)
     unigram_feat = get_unigram_features(df)
@@ -205,7 +237,7 @@ def get_features(df):
 
     feat = pd.concat([
         junk_feat, count_feat, unigram_feat, bigram_feat, ngram_feat,
-        jaccard_feat, jaccard_feat],
+        jaccard_feat, difflib_feat],
         axis=1)
 
     golden_feat = get_golden_features(feat)
