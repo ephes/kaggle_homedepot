@@ -11,4 +11,4 @@ dependencies:
 - nltk
 - pip:
     - xgboost
-    - git+https://github.com/josephreisinger/vowpal_porpoise
+    - git+https://github.com/danielfrg/tsne

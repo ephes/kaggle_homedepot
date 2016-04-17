@@ -204,12 +204,64 @@ def get_ngram_features(df):
     if os.path.exists(ngram_path):
         feat = pd.read_csv(ngram_path, index_col=0)
     else:
-        ngram_vectorizer = StemmedTfidfVectorizer(
+        ngram_vectorizer = TfidfVectorizer(
             min_df=3, max_df=0.75, strip_accents='unicode',
             use_idf=1, smooth_idf=1, sublinear_tf=1, analyzer='char_wb',
             ngram_range=(2, 5))
         feat = get_distance_features(ngram_vectorizer, 'ngram', df)
         feat.to_csv(ngram_path)
+    return feat
+
+
+def get_ngram_without_whitespace_features(df):
+    logging.info('get ngram without whitespace cosine distances')
+    ngram_ww_path = '/tmp/ngram_ww_cosine.csv'
+    if os.path.exists(ngram_ww_path):
+        feat = pd.read_csv(ngram_ww_path, index_col=0)
+    else:
+        vectorizer = TfidfVectorizer(
+            min_df=3, max_df=0.75, strip_accents='unicode',
+            use_idf=1, smooth_idf=1, sublinear_tf=1, analyzer='char_wb',
+            ngram_range=(3, 6))
+
+        feat = pd.DataFrame(index=df.index)
+        search_text = df.search_term.apply(
+            lambda x: ''.join([c for c in str(x).lower() if c.isalnum()]))
+        title_text = df.product_title.apply(
+            lambda x: ''.join([c for c in str(x).lower() if c.isalnum()]))
+        all_text = search_text + '\t' + title_text
+        vectorizer.fit(all_text)
+
+        search_terms = vectorizer.transform(search_text)
+        title_terms = vectorizer.transform(title_text)
+        feat['ngram_ww_title'] = cosine_similarity_row_wise(
+            search_terms, title_terms)
+
+        feat.to_csv(ngram_ww_path)
+    return feat
+
+
+def get_ngram_letter_features(df):
+    logging.info('get ngram letter cosine distances')
+    ngram_l_path = '/tmp/ngram_l_cosine.csv'
+    if os.path.exists(ngram_l_path):
+        feat = pd.read_csv(ngram_l_path, index_col=0)
+    else:
+        vectorizer = TfidfVectorizer(
+            strip_accents='unicode', use_idf=1, smooth_idf=1,
+            sublinear_tf=1, analyzer='char_wb',
+            ngram_range=(1, 1))
+
+        feat = pd.DataFrame(index=df.index)
+        all_text = df.search_term + '\t' + df.product_title
+        vectorizer.fit(all_text)
+
+        search_terms = vectorizer.transform(df.search_term)
+        title = vectorizer.transform(df.product_title)
+        feat['ngram_letter_title'] = cosine_similarity_row_wise(
+            search_terms, title)
+
+        feat.to_csv(ngram_l_path)
     return feat
 
 
@@ -233,11 +285,13 @@ def get_features(df):
     unigram_feat = get_unigram_features(df)
     bigram_feat = get_bigram_features(df)
     ngram_feat = get_ngram_features(df)
+    ngram_ww_feat = get_ngram_without_whitespace_features(df)
+    ngram_l_feat = get_ngram_letter_features(df)
     jaccard_feat = get_jaccard_features(df)
 
     feat = pd.concat([
         junk_feat, count_feat, unigram_feat, bigram_feat, ngram_feat,
-        jaccard_feat, difflib_feat],
+        ngram_ww_feat, ngram_l_feat, jaccard_feat, difflib_feat],
         axis=1)
 
     golden_feat = get_golden_features(feat)
