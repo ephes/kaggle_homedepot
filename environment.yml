@@ -12,3 +12,4 @@ dependencies:
 - pip:
     - xgboost
     - git+https://github.com/danielfrg/tsne
+    - Keras

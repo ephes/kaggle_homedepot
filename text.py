@@ -290,8 +290,23 @@ def get_difflib_features(df):
     return feat
 
 
+def spellcheck(df):
+    from spelling import spell_check_dict
+    queries = []
+    for query in df.search_term:
+        if query in spell_check_dict:
+            new_query = spell_check_dict[query]
+            print('{} -> {}'.format(query, new_query))
+            queries.append(new_query)
+        else:
+            queries.append(query)
+    df.search_term = queries
+    return df
+
+
 def get_features(df):
     logging.info('feature extraction text')
+    df = spellcheck(df)
     difflib_feat = get_difflib_features(df)
     junk_feat = get_junk_features(df)
     count_feat = get_count_features(df)
